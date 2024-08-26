@@ -15,12 +15,14 @@ class Summarization:
         llm = Ollama(model=self.model, temperature=1)          
         if original_input_length <= 200:
             print("Inside 200")
-            initial_prompt = f"Generate me a positive conversation summary of following text in {length_input} words: "
+            # initial_prompt = f"Generate me a positive conversation summary of following text in {length_input} words: "
+            initial_prompt = f"Generate me a positive conversation summary of following text"
             final_prompt = f"{initial_prompt} '{input_text}'"
             
             output_positive = llm.invoke(final_prompt)
             
-            initial_prompt = f"Generate me a negative conversation summary of following text in {length_input} words: "
+            # initial_prompt = f"Generate me a negative conversation summary of following text in {length_input} words: "
+            initial_prompt = f"Generate me a negative conversation summary of following text"
             final_prompt = f"{initial_prompt} '{input_text}'"
             output_negative = llm.invoke(final_prompt)
         
@@ -29,12 +31,14 @@ class Summarization:
             diff_length = original_input_length - 200
             total_length = int(30 + (0.05*diff_length))
             
-            initial_prompt = f"Generate me a positive conversation summary of following text in {total_length} words: "
+            # initial_prompt = f"Generate me a positive conversation summary of following text in {total_length} words: "
+            initial_prompt = f"Generate me a positive conversation summary of following text"
             final_prompt = f"{initial_prompt} '{input_text}'"
             output_positive = llm.invoke(final_prompt)
                 
             
-            initial_prompt = f"Generate me a negative conversation summary of following text in {total_length} words: "
+            # initial_prompt = f"Generate me a negative conversation summary of following text in {total_length} words: "
+            initial_prompt = f"Generate me a negative conversation summary of following text"
             final_prompt = f"{initial_prompt} '{input_text}'"
             output_negative = llm.invoke(final_prompt)
             
