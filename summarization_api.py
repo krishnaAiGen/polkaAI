@@ -39,6 +39,9 @@ class Summarization:
                 refined_prompt = original_prompt + " Ensure the summary is between 150-200 words."
                 refined_text = invoke_with_retry(refined_prompt)
                 
+                if 150 <= len(refined_text.split()) <= 200:
+                    return refined_text
+                
                 # Update text for next iteration or return if refined_text is valid
                 if refined_text:
                     text = refined_text
@@ -46,7 +49,7 @@ class Summarization:
             # Return the last generated text if it is still not within the range
             return text
 
-        # Generate positive summary with a word constraint
+        # Generate positive summary with a word constraint            
         positive_prompt = (
             f"Generate a concise positive summary of around 150-200 words for the following text: '{input_text}'"
         )
