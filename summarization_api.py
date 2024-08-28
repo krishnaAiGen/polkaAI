@@ -13,31 +13,28 @@ class Summarization:
         original_input_length = int(length_input * 6)
         print("original length", original_input_length)
         print(length_input)
+        
+        # Initialize the LLM with a lower temperature for concise and coherent summaries
         llm = Ollama(model=self.model, temperature=0.3)          
         
-        initial_prompt = f"Generate me a very short positive conversation summary of following text: "
-        final_prompt = f"{initial_prompt} '{input_text}'"
-        output_positive = llm.invoke(final_prompt)
+        # Function to invoke LLM with retries if output is None
+        def invoke_with_retry(prompt, max_retries=3):
+            retries = 0
+            output = None
+            while output is None and retries < max_retries:
+                output = llm.invoke(prompt)
+                retries += 1
+            return output
+        
+        # Generate positive summary
+        positive_prompt = f"Generate me a very short positive conversation summary of the following text: '{input_text}'"
+        output_positive = invoke_with_retry(positive_prompt)
         print(output_positive)
         
-        if output_positive is None:
-            while output_positive is None:
-                initial_prompt = f"Generate me a very short positive conversation summary of following text: "
-                final_prompt = f"{initial_prompt} '{input_text}'"
-                output_positive = llm.invoke(final_prompt)
-                
-        
-        initial_prompt = f"Generate me a very short negative conversation summary of following text: "
-        final_prompt = f"{initial_prompt} '{input_text}'"
-        output_negative = llm.invoke(final_prompt)
+        # Generate negative summary
+        negative_prompt = f"Generate me a very short negative conversation summary of the following text: '{input_text}'"
+        output_negative = invoke_with_retry(negative_prompt)
         print("\n\n", output_negative)
-             
-        if output_negative is None:
-            while output_negative is None:
-                initial_prompt = f"Generate me a very short negative conversation summary of following text: "
-                final_prompt = f"{initial_prompt} '{input_text}'"
-                output_negative = llm.invoke(final_prompt)
-                
         
         return output_positive, output_negative
                 
