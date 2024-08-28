@@ -14,57 +14,56 @@ class Summarization:
         print("original length", original_input_length)
         print(length_input)
         llm = Ollama(model=self.model, temperature=1)          
-        if original_input_length <= 200:
-            print("Inside 200")
-            initial_prompt = f"Generate me a positive conversation summary of following text in {length_input} words: "
-            # initial_prompt = f"Generate me a positive conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            
-            output_positive = llm.invoke(final_prompt)
-            
-            initial_prompt = f"Generate me a negative conversation summary of following text in {length_input} words: "
-            # initial_prompt = f"Generate me a negative conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            output_negative = llm.invoke(final_prompt)
         
-        else:
-            print("Outside 200")
-            diff_length = original_input_length - 200
-            total_length = int(30 + ( 0.05 *diff_length))
-            print(total_length)
+        initial_prompt = f"Generate me a short positive conversation summary of following text: "
+        final_prompt = f"{initial_prompt} '{input_text}'"
+        output_positive = llm.invoke(final_prompt)
+        print(output_positive)
+        
+        
+        initial_prompt = f"Generate me a short negative conversation summary of following text: "
+        final_prompt = f"{initial_prompt} '{input_text}'"
+        output_negative = llm.invoke(final_prompt)
+        print(output_negative)
+        
+        # else:
+        #     print("Outside 200")
+        #     diff_length = original_input_length - 200
+        #     total_length = int(30 + ( 0.05 *diff_length))
+        #     print(total_length)
             
-            initial_prompt = f"Generate me a positive conversation summary of following text in {total_length} words: "
-            # initial_prompt = f"Generate me a positive conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            output_positive = llm.invoke(final_prompt)
+        #     initial_prompt = f"Generate me a positive conversation summary of following text in {total_length} words: "
+        #     # initial_prompt = f"Generate me a positive conversation summary of following text"
+        #     final_prompt = f"{initial_prompt} '{input_text}'"
+        #     output_positive = llm.invoke(final_prompt)
             
-            output_positive_length = len(output_positive.split(' '))
-            while True:
-                if output_positive_length > total_length:
-                    print("generating desired words text")
-                    initial_prompt = f"You generated summary of {output_positive_length} words but I need within {total_length} words"
-                    print(initial_prompt)
-                    # initial_prompt = f"Generate me a positive conversation summary of following text"
-                    final_prompt = f"{initial_prompt} '{input_text}'"
-                    output_positive = llm.invoke(final_prompt)
-                    output_positive_length = len(output_positive.split(' '))
-                    print(output_positive_length)
+        #     output_positive_length = len(output_positive.split(' '))
+        #     while True:
+        #         if output_positive_length > total_length:
+        #             print("generating desired words text")
+        #             initial_prompt = f"You generated summary of {output_positive_length} words but I need within {total_length} words"
+        #             print(initial_prompt)
+        #             # initial_prompt = f"Generate me a positive conversation summary of following text"
+        #             final_prompt = f"{initial_prompt} '{input_text}'"
+        #             output_positive = llm.invoke(final_prompt)
+        #             output_positive_length = len(output_positive.split(' '))
+        #             print(output_positive_length)
                     
 
-            initial_prompt = f"Generate me a negative conversation summary of following text in {total_length} words: "
-            # initial_prompt = f"Generate me a negative conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            output_negative = llm.invoke(final_prompt)
+        #     initial_prompt = f"Generate me a negative conversation summary of following text in {total_length} words: "
+        #     # initial_prompt = f"Generate me a negative conversation summary of following text"
+        #     final_prompt = f"{initial_prompt} '{input_text}'"
+        #     output_negative = llm.invoke(final_prompt)
             
-            output_negative_length = len(output_negative.split(' '))
-            while True:
-                if output_negative_length > total_length:
-                    print("generating desired words text")
-                    initial_prompt = f"You generated summary of {output_positive_length} words but I need within {total_length} words"
-                    final_prompt = f"{initial_prompt} '{input_text}'"
-                    output_negative = llm.invoke(final_prompt)
-                    output_negative_length = len(output_negative.split(' '))
-                    print(output_negative_length)
+        #     output_negative_length = len(output_negative.split(' '))
+        #     while True:
+        #         if output_negative_length > total_length:
+        #             print("generating desired words text")
+        #             initial_prompt = f"You generated summary of {output_positive_length} words but I need within {total_length} words"
+        #             final_prompt = f"{initial_prompt} '{input_text}'"
+        #             output_negative = llm.invoke(final_prompt)
+        #             output_negative_length = len(output_negative.split(' '))
+        #             print(output_negative_length)
 
                     
     
