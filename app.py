@@ -5,6 +5,7 @@ app = Flask(__name__)
 
 # Instantiate the PoemController with the required model
 model = "phi3:medium"  # Replace this with the actual model instance
+# model = "phi3"
 summ_controller = Summarization(model)
 
 @app.route('/summarize', methods=['POST'])
@@ -16,9 +17,9 @@ def summarize_text():
         return jsonify({"error": "No text provided"}), 400
 
     # Call the summarization function
-    output_positive, output_negative = summ_controller.summarization(input_text)
+    output_positive, output_negative, output_neutral = summ_controller.summarization(input_text)
     
-    return jsonify({"summary_positive": output_positive, "summary_negative": output_negative})
+    return jsonify({"summary_positive": output_positive, "summary_negative": output_negative, "summary_neutral": output_neutral})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=6000)
