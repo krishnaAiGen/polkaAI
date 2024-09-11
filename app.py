@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # Instantiate the PoemController with the required model
 model = "phi3:medium"  # Replace this with the actual model instance
-# model = "phi3"
+# model = "mistral"
 summ_controller = Summarization(model)
 
 @app.route('/summarize', methods=['POST'])

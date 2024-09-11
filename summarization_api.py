@@ -31,15 +31,15 @@ class Summarization:
                 word_count = len(words)
                 
                 # If the text is within the target range, return it as is
-                if 20 <= word_count <= 40:
+                if 50 <= word_count <= 80:
                     return text
                 
                 # If the text is too long, reinvoke the LLM to generate within the target range
                 print(f"Attempt {attempt+1}: Reinvoking LLM for a more concise summary (current length: {word_count} words)...")
-                refined_prompt = original_prompt + " Ensure the summary is between 150-200 words."
+                refined_prompt = original_prompt + " Ensure the summary is between 50-80 words."
                 refined_text = invoke_with_retry(refined_prompt)
                 
-                if 20 <= len(refined_text.split()) <= 40:
+                if 50 <= len(refined_text.split()) <= 80:
                     return refined_text
                 
                 # Update text for next iteration or return if refined_text is valid
@@ -51,9 +51,9 @@ class Summarization:
 
         # Generate positive summary with a word constraint   
         prompt_list = [
-            "Generate a concise positive summary of around 20-40 words for the following text: ",
-            "Generate a concise negative summary of around 20-40 words for the following text: ",
-            "Generate a concise neutral summary of around 20-40 words for the following text: "
+            "Generate a concise positive summary of around 50-80 words for the following text and don't give word count and unnecessary information in the output': ",
+            "Generate a concise negative summary of around 50-80 words for the following text and don't give word count and unnecessary information in the output: ",
+            "Generate a concise neutral summary of around 50-80 words for the following text and don't give word count and unnecessary information in the output: "
 
             ]
         
@@ -61,10 +61,10 @@ class Summarization:
         for prompt in prompt_list:
             temp_prompt = prompt + f"{input_text}"
             output = invoke_with_retry(temp_prompt)
-            if len(output.split()) >= 40 :
+            if len(output.split()) >= 80 :
                 output_refined = adjust_length_with_reinvoke(output, temp_prompt)
             
-            if len(output.split()) < 40:
+            if len(output.split()) < 80:
                 output_list.append(output)
             
             else:
