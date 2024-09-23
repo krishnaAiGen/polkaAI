@@ -172,7 +172,11 @@ class Summarization:
         for dict1 in positive_negative_dict:
             input_text = dict1['content']
             summary_type = dict1['type']
-            output = self.get_summary(input_text, summary_type)
+            
+            if len(input_text) == 0:
+                output = input_text
+            else:
+                output = self.get_summary(input_text, summary_type)
             output_list.append(output)
         
         output_list_refined = self.refine_output(output_list, positive_negative_dict)
