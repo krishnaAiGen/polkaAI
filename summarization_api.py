@@ -166,6 +166,7 @@ class Summarization:
         # Generate positive and negative summaries
         grouped_id = self.get_group_id(input_text)
         positive_negative_dict = self.get_positive_negative_dict(grouped_id)
+        print(positive_negative_dict)
         
         output_list = []
         for dict1 in positive_negative_dict:

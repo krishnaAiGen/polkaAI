@@ -6,8 +6,8 @@ from langchain_community.llms import Ollama
 app = Flask(__name__)
 
 # Instantiate the PoemController with the required model
-model = "phi3:medium"  # Replace this with the actual model instance
-# model = "phi3"
+# model = "phi3:medium"  # Replace this with the actual model instance
+model = "phi3"
 llm = Ollama(model=model, temperature=0.3)          
 summ_controller = Summarization(llm)
 
