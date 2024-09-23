@@ -156,7 +156,11 @@ class Summarization:
             else:
                 prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling neutral."
             
-            final_text = prefix + output_list[index]
+            if len(output_list[index]) == 0:
+                final_text = output_list[index]
+            else:
+                final_text = prefix + output_list[index]
+                
             output_list_refined.append(final_text)
         
         
