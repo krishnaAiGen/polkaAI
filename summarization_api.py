@@ -148,13 +148,13 @@ class Summarization:
         
         for index in range(len(output_list)):
             if positive_negative_dict[index]['type'] == 'positive':
-                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling optimistic."
+                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling optimistic. "
             
             elif positive_negative_dict[index]['type'] == 'negative':
-                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling against it."
+                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling against it. "
             
             else:
-                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling neutral."
+                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling neutral. "
             
             if len(output_list[index]) == 0:
                 final_text = output_list[index]
