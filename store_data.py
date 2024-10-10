@@ -28,7 +28,7 @@ def create_database():
     
     print(f"Sentiment database created at {file_path}")
     
-def store_data(input_string_joined, input_id_joined, output_positive, output_negative, output_neutral):
+def store_data(input_string_joined, post_id, output_positive, output_negative, output_neutral):
     file_path = "data/sentiment_data.json"
     
     # Check if the file exists, if not create an empty JSON structure
@@ -39,11 +39,11 @@ def store_data(input_string_joined, input_id_joined, output_positive, output_neg
         with open(file_path, 'r') as json_file:
             data = json.load(json_file)
     
-    print(input_id_joined)
+    print(post_id)
     
     # Store the input and outputs in the correct format
-    data[input_id_joined.split(',')[0]] = {
-        "input_id" : input_id_joined,
+    data[post_id] = {
+        "input_id" : post_id,
         "input_text" : input_string_joined,
         "output_positive": output_positive,
         "output_negative": output_negative,

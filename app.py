@@ -14,18 +14,21 @@ create_database()
 
 @app.route('/summarize', methods=['POST'])
 def summarize_text():
-    data = request.get_json()    
+    data = request.get_json()   
     input_text = data.get('text')
 
     if not input_text:
         return jsonify({"error": "No text provided"}), 400
 
     # Call the summarization function
+    post_id = input_text[0]['postId']
+    input_text.pop(0)
+    
     output_positive, output_negative, output_neutral = summ_controller.summarization(input_text)
     
     try:
         input_string_joined, input_id_joined = list_to_string(input_text)
-        store_data(input_string_joined, input_id_joined, output_positive, output_negative, output_neutral)
+        store_data(input_string_joined, post_id, output_positive, output_negative, output_neutral)
     except Exception as e:
         print(e)
     
@@ -33,3 +36,7 @@ def summarize_text():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=6000)
+    
+        
+    
+    
