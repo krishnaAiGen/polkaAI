@@ -2,7 +2,7 @@ from langchain_ollama.llms import OllamaLLM
 
 class InitializeModel:
     def __init__(self):
-        model_list = ['mistral', 'llama2-uncensored', 'phi3']
+        model_list = ['phi3']
         self.llm_objects = []  # Use self to define instance variable
         
         for model in model_list:

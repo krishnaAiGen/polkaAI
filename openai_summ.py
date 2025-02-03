@@ -25,7 +25,29 @@ def revise_text(text):
         messages=[
             {"role": "user", "content": prompt}
         ],
-        max_tokens=500,  # Adjust based on your needs
+        max_tokens=1000,  # Adjust based on your needs
+        temperature=0.7,  # Adjust for creativity level
+    )
+    
+    return response.choices[0].message.content
+
+def get_summ(text):
+    """
+    Revise the input text using OpenAI's API.
+    
+    Args:
+        text (str): The text to be revised
+        
+    Returns:
+        str: The revised text from the API response
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",  # You can use "gpt-4" if you have access
+        messages=[
+            {"role": "user", "content": text}
+        ],
+        max_tokens=1000,  # Adjust based on your needs
         temperature=0.7,  # Adjust for creativity level
     )
     

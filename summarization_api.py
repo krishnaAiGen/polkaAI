@@ -1,6 +1,6 @@
 from langchain_ollama.llms import OllamaLLM
 import re
-from openai_summ import revise_text
+from openai_summ import revise_text, get_summ
 
 class Summarization:
     def __init__(self, llm, summ_model):
@@ -101,46 +101,6 @@ class Summarization:
         return positive_negative_dict
                 
     def get_summary(self, input_text, summary_type):  
-        length_input = self.get_text_length(input_text)
-        original_input_length = int(length_input * 6)
-        print("Original length:", original_input_length)
-        print("Length input (chunks):", length_input)
-        
-        # llm = Ollama(model=self.model, temperature=0.3)          
-
-        def invoke_with_retry(prompt, max_retries=3):
-            retries = 0
-            output = None
-            while output is None and retries < max_retries:
-                output = self.summ_model.invoke(prompt)
-                retries += 1
-            return output
-    
-        def adjust_length_with_reinvoke(text, original_prompt, max_retries=3):
-            # Check if the output is within the desired range (150-200 words)
-            for attempt in range(max_retries):
-                words = text.split()
-                word_count = len(words)
-                
-                # If the text is within the target range, return it as is
-                if 50 <= word_count <= 80:
-                    return text
-                
-                # If the text is too long, reinvoke the LLM to generate within the target range
-                print(f"Attempt {attempt+1}: Reinvoking LLM for a more concise summary (current length: {word_count} words)...")
-                refined_prompt = original_prompt + " Ensure the summary is between 50-80 words."
-                refined_text = invoke_with_retry(refined_prompt)
-                
-                if 50 <= len(refined_text.split()) <= 80:
-                    return refined_text
-                
-                # Update text for next iteration or return if refined_text is valid
-                if refined_text:
-                    text = refined_text
-            
-            # Return the last generated text if it is still not within the range
-            return text
-
         # Generate positive summary with a word constraint   
         prompt_list = {
             "positive" : "Generate a concise positive summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output: ",
@@ -149,17 +109,10 @@ class Summarization:
 
             }
         
-        output_list = []
-        temp_prompt = prompt_list[summary_type] + f"{input_text}"
-        output = invoke_with_retry(temp_prompt)
-        if len(output.split()) >= 80 :
-            output_refined = adjust_length_with_reinvoke(output, temp_prompt)
-            return output_refined
-            
-        if len(output.split()) < 80:
-            return output
-
+        final_prompt = prompt_list[summary_type] + input_text
         
+        output = get_summ(final_prompt)
+
         return output
     
     def refine_output(self, output_list, positive_negative_dict):
