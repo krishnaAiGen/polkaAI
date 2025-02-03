@@ -1,9 +1,11 @@
-from langchain_community.llms import Ollama
+from langchain_ollama.llms import OllamaLLM
 import re
+from openai_summ import revise_text
 
 class Summarization:
-    def __init__(self, llm):
-        self.llm = llm
+    def __init__(self, llm, summ_model):
+        self.llm = llm.llm_objects
+        self.summ_model = summ_model
     
     def get_text_length(self, input_text):
         splited_text = input_text.split(' ')
@@ -24,6 +26,31 @@ class Summarization:
         
         return grouped_id_text
     
+    def get_sentiment_consensus(self, content):
+        sentiment_dict = {
+            'positive': 0,
+            'negative': 0,
+            'neutral' : 0
+            }
+        
+        for model in self.llm:
+            print(content)
+            output = model.invoke("tell me whether this text is positive, negative or neutral and output should only contain either positive or negative or neutral" + content)
+            output_lower = output.lower()
+            match = re.search(r'\b(positive|negative|neutral)\b', output_lower)
+            
+            if match:
+                sentiment = match.group(0)
+            else:
+                sentiment = 'neutral'
+            
+            sentiment_dict[sentiment] = sentiment_dict[sentiment] + 1 
+        
+        max_key = max(sentiment_dict, key=sentiment_dict.get)
+        
+        return max_key
+ 
+            
     def get_positive_negative_dict(self, grouped_id):
         positive_string = ''
         negative_string = ''
@@ -37,15 +64,7 @@ class Summarization:
         # llm = Ollama(model=self.model, temperature=0.3)          
 
         for id1, content in grouped_id.items():
-            output = self.llm.invoke("tell me whether this text is positive, negative or neutral and output should only contain either positive or negative or neutral" + content)
-            # output = llm.invoke("tell me whether this text is positive, negative or neutral and output should only contain either positive or negative or neutral" + content)
-            output_lower = output.lower()
-            match = re.search(r'\b(positive|negative|neutral)\b', output_lower)
-            
-            if match:
-                sentiment = match.group(0)
-            else:
-                sentiment = None
+            sentiment = self.get_sentiment_consensus(content)
         
             if sentiment == 'positive':
                 positive_string = positive_string + content
@@ -93,7 +112,7 @@ class Summarization:
             retries = 0
             output = None
             while output is None and retries < max_retries:
-                output = self.llm.invoke(prompt)
+                output = self.summ_model.invoke(prompt)
                 retries += 1
             return output
     
@@ -124,9 +143,9 @@ class Summarization:
 
         # Generate positive summary with a word constraint   
         prompt_list = {
-            "positive" : "Generate a concise positive summary of around 50-80 words for the following text and don't give word count and unnecessary information in the output': ",
-            "negative": "Generate a concise negative summary of around 50-80 words for the following text and don't give word count and unnecessary information in the output: ",
-            "neutral": "Generate a concise neutral summary of around 50-80 words for the following text and don't give word count and unnecessary information in the output: "
+            "positive" : "Generate a concise positive summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output: ",
+            "negative": "Generate a concise negative summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output:  ",
+            "neutral": "Generate a concise neutral summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output:"
 
             }
         
@@ -160,13 +179,15 @@ class Summarization:
                 final_text = output_list[index]
             else:
                 final_text = prefix + output_list[index]
-                
+            
+            # final_text = revise_text(final_text)
             output_list_refined.append(final_text)
         
         
         return output_list_refined
   
     def summarization(self, input_text):
+        print("I am inside summarization")
         # Generate positive and negative summaries
         grouped_id = self.get_group_id(input_text)
         positive_negative_dict = self.get_positive_negative_dict(grouped_id)

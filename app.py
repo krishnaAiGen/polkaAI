@@ -1,19 +1,22 @@
 from flask import Flask, request, jsonify
 from summarization_api import Summarization  # Replace with the actual path to your PoemController class
-from langchain_community.llms import Ollama
+from langchain_ollama.llms import OllamaLLM
 from store_data import *
+from model import InitializeModel
 
+
+summ_model = OllamaLLM(model="mistral", temperature=1)
+llm_list =  InitializeModel()
+summ_controller = Summarization(llm_list, summ_model)     
+ 
+create_database()
 app = Flask(__name__)
 
-# Instantiate the PoemController with the required model
-# model = "phi3:medium"  # Replace this with the actual model instance
-model = "phi3"
-llm = Ollama(model=model, temperature=0.3)          
-summ_controller = Summarization(llm)
-create_database()
+
 
 @app.route('/summarize', methods=['POST'])
 def summarize_text():
+    print("I got hit")
     data = request.get_json()   
     input_text = data.get('text')
 
