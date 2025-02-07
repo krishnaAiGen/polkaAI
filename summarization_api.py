@@ -1,80 +1,162 @@
-from langchain_community.llms import Ollama
+from langchain_ollama.llms import OllamaLLM
+import re
+from openai_summ import revise_text, get_summ
 
 class Summarization:
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, llm, summ_model):
+        self.llm = llm.llm_objects
+        self.summ_model = summ_model
     
     def get_text_length(self, input_text):
         splited_text = input_text.split(' ')
-        return int(len(splited_text)/6)      
+        return int(len(splited_text)/6)  
     
-    def get_summary(self, input_text):  
-        length_input = self.get_text_length(input_text)
-        original_input_length = int(length_input * 6)
-        print("original length", original_input_length)
-        print(length_input)
-        llm = Ollama(model=self.model, temperature=1)          
-        if original_input_length <= 200:
-            print("Inside 200")
-            initial_prompt = f"Generate me a positive conversation summary of following text in {length_input} words: "
-            # initial_prompt = f"Generate me a positive conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            
-            output_positive = llm.invoke(final_prompt)
-            
-            initial_prompt = f"Generate me a negative conversation summary of following text in {length_input} words: "
-            # initial_prompt = f"Generate me a negative conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            output_negative = llm.invoke(final_prompt)
+    def get_group_id(self, input_text):        
+        grouped_id_text = {}
         
-        else:
-            print("Outside 200")
-            diff_length = original_input_length - 200
-            total_length = int(30 + ( 0.05 *diff_length))
-            print(total_length)
+        for dict1 in input_text:
+            id1 = dict1['id']
+            content = dict1['content']
             
-            initial_prompt = f"Generate me a positive conversation summary of following text in {total_length} words: "
-            # initial_prompt = f"Generate me a positive conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            output_positive = llm.invoke(final_prompt)
+            if id1 not in grouped_id_text:
+                grouped_id_text[id1] = content
             
-            output_positive_length = len(output_positive.split(' '))
-            while True:
-                if output_positive_length > total_length:
-                    print("generating desired words text")
-                    initial_prompt = f"You generated summary of {output_positive_length} words but I need within {total_length} words"
-                    print(initial_prompt)
-                    # initial_prompt = f"Generate me a positive conversation summary of following text"
-                    final_prompt = f"{initial_prompt} '{input_text}'"
-                    output_positive = llm.invoke(final_prompt)
-                    output_positive_length = len(output_positive.split(' '))
-                    print(output_positive_length)
-                    
-
-            initial_prompt = f"Generate me a negative conversation summary of following text in {total_length} words: "
-            # initial_prompt = f"Generate me a negative conversation summary of following text"
-            final_prompt = f"{initial_prompt} '{input_text}'"
-            output_negative = llm.invoke(final_prompt)
-            
-            output_negative_length = len(output_negative.split(' '))
-            while True:
-                if output_negative_length > total_length:
-                    print("generating desired words text")
-                    initial_prompt = f"You generated summary of {output_positive_length} words but I need within {total_length} words"
-                    final_prompt = f"{initial_prompt} '{input_text}'"
-                    output_negative = llm.invoke(final_prompt)
-                    output_negative_length = len(output_negative.split(' '))
-                    print(output_negative_length)
-
-                    
+            else:
+                grouped_id_text[id1] = grouped_id_text[id1] + '\n' +  content
+        
+        return grouped_id_text
     
-        return output_positive, output_negative
+    def get_sentiment_consensus(self, content):
+        sentiment_dict = {
+            'positive': 0,
+            'negative': 0,
+            'neutral' : 0
+            }
+        
+        for model in self.llm:
+            print(content)
+            output = model.invoke("tell me whether this text is positive, negative or neutral and output should only contain either positive or negative or neutral" + content)
+            output_lower = output.lower()
+            match = re.search(r'\b(positive|negative|neutral)\b', output_lower)
+            
+            if match:
+                sentiment = match.group(0)
+            else:
+                sentiment = 'neutral'
+            
+            sentiment_dict[sentiment] = sentiment_dict[sentiment] + 1 
+        
+        max_key = max(sentiment_dict, key=sentiment_dict.get)
+        
+        return max_key
+ 
+            
+    def get_positive_negative_dict(self, grouped_id):
+        positive_string = ''
+        negative_string = ''
+        neutral_string = ''
+        
+        positive_counter = 0
+        negative_counter = 0
+        neutral_count = 0
+        
+        
+        # llm = Ollama(model=self.model, temperature=0.3)          
+
+        for id1, content in grouped_id.items():
+            sentiment = self.get_sentiment_consensus(content)
+        
+            if sentiment == 'positive':
+                positive_string = positive_string + content
+                positive_counter = positive_counter + 1
+            
+            elif sentiment == 'negative':
+                negative_string = negative_string + content
+                negative_counter = negative_counter + 1
+            
+            elif sentiment == 'neutral' or sentiment == None:
+                neutral_string = neutral_string + content
+                neutral_count = neutral_count + 1
                 
-    def summarization(self, input_text):
-        output_positive, output_negative = self.get_summary(input_text)
+        positive_negative_dict = [
+            {
+                "content" : positive_string,
+                "percent": positive_counter/len(grouped_id),
+                "type" : "positive"
+                },
+            {
+                "content" : negative_string,
+                "percent" : negative_counter/len(grouped_id),
+                "type" : "negative"
+                },
+            
+            {
+                "content" : neutral_string,
+                "percent" : neutral_count/len(grouped_id),
+                "type" : "neutral"
+                }
+            ]
+
         
-        return output_positive, output_negative
+        return positive_negative_dict
+                
+    def get_summary(self, input_text, summary_type):  
+        # Generate positive summary with a word constraint   
+        prompt_list = {
+            "positive" : "Generate a concise positive summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output: ",
+            "negative": "Generate a concise negative summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output:  ",
+            "neutral": "Generate a concise neutral summarized text of around 50-80 words for the following discussion and don't give word count and unnecessary information in the output:"
 
+            }
+        
+        final_prompt = prompt_list[summary_type] + input_text
+        
+        output = get_summ(final_prompt)
 
-
-
+        return output
+    
+    def refine_output(self, output_list, positive_negative_dict):
+        output_list_refined = []
+        
+        for index in range(len(output_list)):
+            if positive_negative_dict[index]['type'] == 'positive':
+                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling optimistic. "
+            
+            elif positive_negative_dict[index]['type'] == 'negative':
+                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling against it. "
+            
+            else:
+                prefix = f"Overall {int(positive_negative_dict[index]['percent']* 100)} % of users are feeling neutral. "
+            
+            if len(output_list[index]) == 0:
+                final_text = output_list[index]
+            else:
+                final_text = prefix + output_list[index]
+            
+            # final_text = revise_text(final_text)
+            output_list_refined.append(final_text)
+        
+        
+        return output_list_refined
+  
+    def summarization(self, input_text):
+        print("I am inside summarization")
+        # Generate positive and negative summaries
+        grouped_id = self.get_group_id(input_text)
+        positive_negative_dict = self.get_positive_negative_dict(grouped_id)
+        # print(positive_negative_dict)
+        
+        output_list = []
+        for dict1 in positive_negative_dict:
+            input_text = dict1['content']
+            summary_type = dict1['type']
+            
+            if len(input_text) == 0:
+                output = input_text
+            else:
+                output = self.get_summary(input_text, summary_type)
+            output_list.append(output)
+        
+        output_list_refined = self.refine_output(output_list, positive_negative_dict)
+        
+        return output_list_refined[0], output_list_refined[1], output_list_refined[2]
