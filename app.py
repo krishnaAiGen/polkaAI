@@ -3,10 +3,13 @@ from threading import Lock
 import logging
 import signal
 import time
-from summarization_api import Summarization
-from langchain_ollama.llms import OllamaLLM
 from store_data import *
-from model import InitializeModel
+import json
+import os
+from deepseek import DeepSeek
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -14,10 +17,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Global lock to ensure sequential processing
 request_lock = Lock()
 
-# Initialize summarization model
-summ_model = OllamaLLM(model="mistral", temperature=1)
-llm_list = InitializeModel()
-summ_controller = Summarization(llm_list, summ_model)
 
 create_database()
 app = Flask(__name__)
@@ -30,6 +29,10 @@ request_count = {}
 RATE_LIMIT = 10  # Max requests per minute per IP
 BLOCK_THRESHOLD = 20  # If exceeded, the IP gets blocked
 CLEANUP_INTERVAL = 60  # Cleanup interval for rate limits
+
+#creating a deepseek object 
+deepseek = DeepSeek(os.getenv("DEEPSEEK_URL"), os.getenv("DEEPSEEK_KEY"), os.getenv("OPENAI_API_KEY"))
+
 
 # Function to clear rate-limited IPs every CLEANUP_INTERVAL seconds
 def cleanup_rate_limits():
@@ -71,6 +74,7 @@ def summarize_text():
         try:
             logging.info("Processing request")
             data = request.get_json()
+            # data = {'text': [{'network': 'ethereum', 'postId': '2451', 'postContent': "Ethereum developers have announced a major upgrade, 'Dencun,' set to improve scalability and reduce gas fees on the network. This update will introduce proto-danksharding, an innovation that enhances rollups' efficiency. With this upgrade, users can expect faster transactions and lower costs, making Ethereum more competitive with Layer 2 solutions. The Ethereum Foundation has released a roadmap detailing the upgrade phases, and the community is actively discussing its potential impact.", 'safeKey': 'Ql5zxrJvUphM6OaAeoaJG8FyccTHxyXM'}, {'content': 'This is a much-needed update! Ethereum has been struggling with high gas fees, and this could be a game-changer.', 'id': 7890, 'username': 'CryptoHodler'}, {'content': 'How does proto-danksharding compare to other Layer 2 solutions like Optimism and Arbitrum?', 'id': 7891, 'username': 'TechEnthusiast'}, {'content': 'If Firedancer delivers as promised, Solana could truly be the fastest blockchain out there. Exciting times ahead!', 'id': 8923, 'username': 'BlockChainGuru'}, {'content': 'Solana’s network has faced downtime before. Will Firedancer solve these stability issues?', 'id': 8924, 'username': 'DeFiMaster'}]}
 
             if not isinstance(data, dict):
                 logging.error("Received invalid JSON format")
@@ -85,14 +89,27 @@ def summarize_text():
             if not isinstance(input_text[0], dict) or 'postId' not in input_text[0]:
                 logging.error("Invalid input structure")
                 return jsonify({"error": "Invalid input format"}), 400
+            
+            # Check if safe_key exists
+            if 'safeKey' not in input_text[0]:
+                logging.error("No safe_key provided in the request")
+                return jsonify({"error": "Improper format: Missing authentication key"}), 401
+            
+            # Authenticate safe_key
+            provided_safe_key = input_text[0]['safeKey']
+            real_safe_key = os.getenv("SAFE_KEY")
+            
+            if provided_safe_key != real_safe_key:
+                logging.error("Invalid safe_key provided")
+                return jsonify({"error": "Authentication failed"}), 401
 
-            # Extract post_id and remove from input
-            post_id = input_text[0]['postId']
-            input_text.pop(0)
+            #fill safe key with na
+            input_text[0]['safeKey'] = 'n/a'
 
             # Perform summarization with timeout
             try:
-                output_positive, output_negative, output_neutral = summ_controller.summarization(input_text)
+                print("\n", input_text)
+                output_positive, output_negative, output_neutral = deepseek.get_summary(str(input_text))
             except Exception as e:
                 logging.error(f"Summarization error: {e}")
                 return jsonify({"error": "Summarization failed"}), 500
