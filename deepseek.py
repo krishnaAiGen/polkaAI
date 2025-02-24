@@ -18,9 +18,10 @@ class DeepSeek:
 
         self.max_attempts = 5
         self.retry_delay = 1  # 1 second delay between retries
+        self.timeout = 120  # 60 second timeout for API calls
         
     def _try_deepseek(self, input_text):
-        """Attempt to get response from DeepSeek API"""
+        """Attempt to get response from DeepSeek API with timeout"""
         for attempt in range(self.max_attempts):
             print(f"\033[92mdeepseek_attempt {attempt}\033[0m")
 
@@ -70,7 +71,8 @@ class DeepSeek:
 
                          """},
                         {"role": "user", "content": input_text}
-                    ]
+                    ],
+                    timeout=self.timeout  # Add timeout parameter
                 )
 
                 
@@ -89,6 +91,7 @@ class DeepSeek:
                     continue
                     
             except Exception as e:
+                print(f"DeepSeek attempt {attempt} failed: {str(e)}")
                 if attempt < self.max_attempts - 1:
                     time.sleep(self.retry_delay)
                     continue
@@ -97,7 +100,7 @@ class DeepSeek:
         return None  # If no valid JSON found after all attempts
     
     def _try_openai(self, input_text):
-        """Fallback to OpenAI API"""
+        """Fallback to OpenAI API with timeout"""
         for attempt in range(self.max_attempts):
             try:
                 print(f"openai_attempt {attempt}")
@@ -143,7 +146,8 @@ class DeepSeek:
                         Follow the JSON format exactly. No extra text or explanations. Each summarized statement in the output should be 50-80 words long.
                          """},
                         {"role": "user", "content": input_text}
-                    ]
+                    ],
+                    timeout=self.timeout  # Add timeout parameter
                 )
                 
                 for choice in response.choices:
@@ -161,6 +165,7 @@ class DeepSeek:
                     continue
                     
             except Exception as e:
+                print(f"OpenAI attempt {attempt} failed: {str(e)}")
                 if attempt < self.max_attempts - 1:
                     time.sleep(self.retry_delay)
                     continue
@@ -174,16 +179,15 @@ class DeepSeek:
             # Try DeepSeek first
             result = self._try_deepseek(input_text)
             if result is not None:
-                return result['summary_positive'], result['summary_neutral'], result['summary_negative']
+                return result.get('summary_positive', ''), result.get('summary_negative', ''), result.get('summary_neutral', '')
             else:
                 # If DeepSeek fails, try OpenAI
                 result = self._try_openai(input_text)
-                
-                return result['summary_positive'], result['summary_neutral'], result['summary_negative']
+                if result is not None:
+                    return result.get('summary_positive', ''), result.get('summary_negative', ''), result.get('summary_neutral', '')
 
-            return None
+            return None, None, None
             
         except Exception as e:
+            print(f"All API attempts failed: {str(e)}")
             raise RuntimeError(f"Both APIs failed: {str(e)}")
-            
-
