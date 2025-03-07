@@ -57,11 +57,9 @@ class DeepSeek:
                         Classify each comment as positive, neutral, or negative.
                         Calculate sentiment percentages based on total comments.
                         Summarize key themes from each sentiment category.
+                        Each summary should be 50-80 words long.
                         Edge Cases: If all comments fall into one category, summarize accordingly. Avoid redundancy.
                         Example Output:
-                        json
-                        Copy
-                        Edit
                         {
                           "summary_positive": "Overall, 35% of users are optimistic. They appreciate Polkassembly's innovations and future plans.",
                           "summary_neutral": "Overall, 57% of users are neutral. Discussions focus on budget adjustments, stability, and UI improvements.",
@@ -134,6 +132,7 @@ class DeepSeek:
                         - Classify each comment as positive, neutral, or negative.
                         - Calculate sentiment percentages based on total comments.
                         - Summarize key themes from each sentiment category.
+                        - Each summary should be 50-80 words long.
                         - Edge Cases: If all comments fall into one category, summarize accordingly. Avoid redundancy.
                         
                         Example Output:
