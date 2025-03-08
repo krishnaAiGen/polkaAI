@@ -2,6 +2,21 @@
 
 A Python-based sentiment analysis tool that processes crypto-related comments and provides summarized sentiment analysis using both DeepSeek and OpenAI APIs.
 
+## Project Structure
+```
+polka_ai/
+├── __init__.py           # Package initialization
+├── api/
+│   └── sentiment.py      # Main sentiment analysis implementation
+├── data/
+│   └── store.py         # Data storage utilities
+├── utils/               # Utility functions
+│   └── __init__.py
+tests/
+├── __init__.py
+└── test_sentiment.py    # Test cases
+```
+
 ## Features
 
 - Analyzes comments from crypto-related discussions
@@ -27,7 +42,11 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 3. Install dependencies:
 ```bash
-pip install openai python-dotenv
+# For development:
+pip install -e ".[dev]"
+
+# For production:
+pip install .
 ```
 
 4. Create a `.env` file in the project root with your API keys:
@@ -40,7 +59,7 @@ OPENAI_API_KEY=your_openai_api_key
 ## Usage
 
 ```python
-from deepseek import DeepSeek
+from polka_ai.api.sentiment import DeepSeek
 from dotenv import load_dotenv
 import os
 
@@ -78,6 +97,29 @@ positive, negative, neutral = analyzer.get_summary(str(input_data))
 print("Positive:", positive)
 print("Negative:", negative)
 print("Neutral:", neutral)
+```
+
+## Development
+
+1. Install development dependencies:
+```bash
+pip install -e ".[dev]"
+```
+
+2. Run tests:
+```bash
+pytest tests/
+```
+
+3. Format code:
+```bash
+black polka_ai tests
+isort polka_ai tests
+```
+
+4. Check code quality:
+```bash
+flake8 polka_ai tests
 ```
 
 ## Response Format
